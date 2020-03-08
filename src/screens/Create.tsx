@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-native';
-import { Text, StyleSheet, View, Animated } from 'react-native';
+import { Text, StyleSheet, View, Animated, Button } from 'react-native';
 import { getClip } from '../api/firestore/clips';
 import LottieView from 'lottie-react-native';
+import { NativeModules } from 'react-native';
+const { MyLottieModule } = NativeModules;
 
 function Create() {
   let { id } = useParams();
@@ -23,6 +25,9 @@ function Create() {
   const [animation, setAnimation] = useState<any>(null);
   const [animProgress, setAnimProgress] = useState<any>(null);
 
+  const showToast = () => {
+    MyLottieModule.showToast('This is a native toast!!');
+  }
 
   useEffect(() => {
     setLoading(true);
@@ -44,7 +49,7 @@ function Create() {
         //   asset["e"] = 1;
         // });
         // console.log(data);
-        setAnimationSource(data);        
+        setAnimationSource(data);
       }
 
       setLoading(false);
@@ -75,6 +80,7 @@ function Create() {
       <Link to="/" style={styles.button}>
         <Text style={styles.text}>Share Video</Text>
       </Link>
+      <Button onPress={showToast} title="Toast Btn" />
     </>
   );
 }
