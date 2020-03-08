@@ -15,6 +15,7 @@ import { NativeRouter, Route } from "react-router-native";
 import Menu from './src/components/Menu';
 import Home from './src/screens/Home';
 import Clip from './src/screens/Clip';
+import Create from './src/screens/Create';
 import { initFixes } from './src/utils/fixes';
 
 initFixes();
@@ -25,7 +26,8 @@ const App = () => {
       <View style={styles.container}>
         <Menu />
         <Route exact path="/" component={Home} />
-        <Route path="/clip/:id" component={Clip} />
+        <Route exact path="/clip/:id" component={Clip} />
+        <Route exact path="/create/:id" component={Create} />
       </View>
     </NativeRouter>
   );

@@ -4,8 +4,7 @@ import { Text, StyleSheet, View } from 'react-native';
 import { getClip } from '../api/firestore/clips';
 import Video from 'react-native-video';
 
-
-function Clip(props: any) {
+function Clip() {
   let { id } = useParams();
   const [clip, setClip] = useState<any>({
     title: null,
@@ -44,27 +43,40 @@ function Clip(props: any) {
       {
         !loading ?
           (<View style={styles.videoContainer}>
-            <Video source={{ uri: clip.videoUrl }} style={styles.video} />
+            <Video source={{ uri: clip.videoUrl }} resizeMode="cover" style={styles.video} />
           </View>) :
-          null
+          <Text>loading...</Text>
       }
+      <Link
+        key={clip.id}
+        to={`/create/${id}`}
+        style={styles.button}
+      ><Text style={styles.text}>Create Video</Text></Link>
     </>
   );
 }
 
 var styles = StyleSheet.create({
   videoContainer: {
-    flex: 1,
     backgroundColor: 'black',
-    padding: 100
+    width: "100%",
+    height: 256,
   },
   video: {
     position: 'absolute',
     top: 0,
-    bottom: 0,
     left: 0,
+    bottom: 0,
     right: 0,
   },
+  button: {
+    backgroundColor: "#f06060",
+    padding: 10
+  },
+  text: {
+    color: "#ffffff",
+    textAlign: "center"
+  }
 });
 
 export default Clip;

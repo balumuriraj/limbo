@@ -23,7 +23,7 @@ function Home() {
         clips.map((clip) => (
           <Link
             key={clip.id}
-            to={`clip/${clip.id}`}
+            to={`/clip/${clip.id}`}
             underlayColor="#f0f4f7"
           >
             <Text>{clip.title}</Text>
