@@ -3,8 +3,7 @@ import { useParams, Link } from 'react-router-native';
 import { Text, StyleSheet, View, Animated, Button } from 'react-native';
 import { getClip } from '../api/firestore/clips';
 import LottieView from 'lottie-react-native';
-import { NativeModules } from 'react-native';
-const { MyLottieModule } = NativeModules;
+import { MyLottieModule, MyLottie } from '../nativeModules/MyLottieModule';
 
 function Create() {
   let { id } = useParams();
@@ -25,8 +24,9 @@ function Create() {
   const [animation, setAnimation] = useState<any>(null);
   const [animProgress, setAnimProgress] = useState<any>(null);
 
-  const showToast = () => {
-    MyLottieModule.showToast('This is a native toast!!');
+  const showToast = async () => {    
+    const msg = await MyLottieModule.doPromiseTask(1);
+    MyLottieModule.showToast(msg, MyLottieModule.LONG);
   }
 
   useEffect(() => {
@@ -61,7 +61,7 @@ function Create() {
   return (
     <>
       <Text>{id}</Text>
-      <Text>{clip.title}</Text>
+      <Text>{clip.title}</Text> 
       {
         !loading ?
           (<View style={styles.container}>
@@ -79,7 +79,8 @@ function Create() {
       }
       <Link to="/" style={styles.button}>
         <Text style={styles.text}>Share Video</Text>
-      </Link>
+      </Link>    
+      <MyLottie style={ styles.bottom }></MyLottie>
       <Button onPress={showToast} title="Toast Btn" />
     </>
   );
@@ -98,6 +99,10 @@ var styles = StyleSheet.create({
   text: {
     color: "#ffffff",
     textAlign: "center"
+  },
+  bottom: {
+    width: "100%",
+    height: 100
   }
 });
 
