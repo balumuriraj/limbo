@@ -5920,6 +5920,11 @@ react-is@^16.12.0, react-is@^16.6.0, react-is@^16.7.0, react-is@^16.8.1, react-i
   resolved "https://registry.yarnpkg.com/react-is/-/react-is-16.13.0.tgz#0f37c3613c34fe6b37cd7f763a0d6293ab15c527"
   integrity sha512-GFMtL0vHkiBv9HluwNZTggSn/sCyEt9n02aM0dSAjGGyqyNlAyftYm4phPxdvCigG15JreC5biwxCgTAJZ7yAA==
 
+react-native-ffmpeg@^0.4.3:
+  version "0.4.3"
+  resolved "https://registry.yarnpkg.com/react-native-ffmpeg/-/react-native-ffmpeg-0.4.3.tgz#e4ef3247fd9b7fed0a2c5dfb59f057debba866e7"
+  integrity sha512-4XWNztckfeLbyy/YVjb8eHUOA+9gjGZiiXP9zRmpJuEeJNKoXFBmYjkY55mcFJaZuUscDhJPNMETG5nFwsUS8Q==
+
 react-native-safe-modules@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/react-native-safe-modules/-/react-native-safe-modules-1.0.0.tgz#10a918adf97da920adb1e33e0c852b1e80123b65"

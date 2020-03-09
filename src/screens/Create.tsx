@@ -3,8 +3,10 @@ import { useParams, Link } from 'react-router-native';
 import { Text, StyleSheet, View, Animated, Button, Image } from 'react-native';
 import { getClip } from '../api/firestore/clips';
 import LottieView from 'lottie-react-native';
+import { RNFFmpeg } from 'react-native-ffmpeg';
 import { MyLottieModule, MyLottie } from '../nativeModules/MyLottieModule';
 import ViewShot from "react-native-view-shot";
+import * as RNFS from 'react-native-fs';
 // import Video from 'react-native-video';
 
 function Create() {
@@ -35,6 +37,20 @@ function Create() {
     MyLottieModule.showToast(msg, MyLottieModule.LONG);
   }
 
+  // const startAnimation = async (anim: any) => {
+  //   if (anim) {
+  //     console.log(anim);
+  //     setAnimation(anim);
+  //     // setAnimProgress(new Animated.Value(7));
+  //     console.log(anim.isMounted());
+
+  //     if (myRef.current && anim.isMounted()) {
+  //       const uri = await myRef.current.capture();
+  //       setImg(uri);
+  //     }
+  //   }
+  // }
+
   useEffect(() => {
     setLoading(true);
 
@@ -56,15 +72,29 @@ function Create() {
         // });
         // console.log(data);
         setAnimationSource(data);
+        // TODO: check ios support for RNFS.DocumentDirectoryPath
+        // RNFFmpeg.execute(`-ss ${new Date(10/result.fps * 1000).toISOString().substr(11).split("Z")[0]} -i ${result.videoUrl} -vframes 1 -y ${RNFS.CachesDirectoryPath}/output.jpg`).then(result => {
+        //   const path = "file://"+RNFS.CachesDirectoryPath+'/output.jpg'
+        //   setImg(path);
+        //   console.log("FFmpeg process exited with rc " + result.rc)
+        // });
+
+        const res = await RNFFmpeg.execute(`-i ${result.videoUrl} -y -r ${result.fps} ${RNFS.DocumentDirectoryPath}/frame-%04d.bmp`);
+        console.log("FFmpeg process exited with rc " + res.rc)
+        const path = "file://" + RNFS.DocumentDirectoryPath + '/frame-0007.bmp'
+        setImg(path);
+
+        setAnimProgress(new Animated.Value(7 / result.fps));
       }
 
-      setLoading(false);
+      setLoading(false);      
 
-      setTimeout(() => {
-        myRef.current.capture().then((uri: string) => {
+      setTimeout(async () => {
+        if (myRef.current) {
+          const uri = await myRef.current.capture();
           setImg(uri);
-        });
-      }, 1000);
+        }
+      }, 5000);
     }
 
     fetchData();
@@ -82,16 +112,12 @@ function Create() {
                 source={animationSource}
                 imageAssetsFolder={'lottie/placeholder'}
                 ref={setAnimation}
-                autoPlay
-                loop
-                style={styles.animation}
+                progress={animProgress}
+                style={{ width: "100%", height: clip.height }}
               />
             </ViewShot>
             <Text>loaded</Text>
-            <Image
-              source={{ uri: img }}
-              style={{ width: 200, height: 200 }}
-            />
+            <Image source={{ uri: img }} style={{ width: "100%", height: clip.height }} />
             {/* <ViewShot onCapture={onCapture} captureMode="continuous" style={{ width: 300, height: 300 }}>
               <Video style={{ width: 300, height: 300 }} source={{ uri: clip.videoUrl }} volume={0} repeat />
             </ViewShot>
@@ -113,10 +139,6 @@ function Create() {
 
 var styles = StyleSheet.create({
   container: {},
-  animation: {
-    width: "100%",
-    height: 256
-  },
   button: {
     backgroundColor: "#f06060",
     padding: 10
