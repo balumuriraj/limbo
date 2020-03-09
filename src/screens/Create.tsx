@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, Link } from 'react-router-native';
-import { Text, StyleSheet, View, Animated, Button } from 'react-native';
+import { Text, StyleSheet, View, Animated, Button, Image } from 'react-native';
 import { getClip } from '../api/firestore/clips';
 import LottieView from 'lottie-react-native';
 import { MyLottieModule, MyLottie } from '../nativeModules/MyLottieModule';
+import ViewShot from "react-native-view-shot";
+// import Video from 'react-native-video';
 
 function Create() {
   let { id } = useParams();
@@ -23,8 +25,12 @@ function Create() {
   const [animationSource, setAnimationSource] = useState<any>(null);
   const [animation, setAnimation] = useState<any>(null);
   const [animProgress, setAnimProgress] = useState<any>(null);
+  const myRef: any = useRef();
+  const [img, setImg] = useState<any>(null);
+  // const [source, setSource] = useState<any>(null);
+  // const onCapture = useCallback((uri: any) => setSource({ uri }), []);
 
-  const showToast = async () => {    
+  const showToast = async () => {
     const msg = await MyLottieModule.doPromiseTask(1);
     MyLottieModule.showToast(msg, MyLottieModule.LONG);
   }
@@ -53,6 +59,12 @@ function Create() {
       }
 
       setLoading(false);
+
+      setTimeout(() => {
+        myRef.current.capture().then((uri: string) => {
+          setImg(uri);
+        });
+      }, 1000);
     }
 
     fetchData();
@@ -61,26 +73,39 @@ function Create() {
   return (
     <>
       <Text>{id}</Text>
-      <Text>{clip.title}</Text> 
+      <Text>{clip.title}</Text>
       {
         !loading ?
           (<View style={styles.container}>
-            <LottieView
-              source={animationSource}
-              imageAssetsFolder={'lottie/placeholder'}
-              ref={setAnimation}
-              autoPlay
-              loop
-              style={styles.animation}
-            />
+            <ViewShot ref={myRef} options={{ format: "jpg", quality: 0.9 }}>
+              <LottieView
+                source={animationSource}
+                imageAssetsFolder={'lottie/placeholder'}
+                ref={setAnimation}
+                autoPlay
+                loop
+                style={styles.animation}
+              />
+            </ViewShot>
             <Text>loaded</Text>
+            <Image
+              source={{ uri: img }}
+              style={{ width: 200, height: 200 }}
+            />
+            {/* <ViewShot onCapture={onCapture} captureMode="continuous" style={{ width: 300, height: 300 }}>
+              <Video style={{ width: 300, height: 300 }} source={{ uri: clip.videoUrl }} volume={0} repeat />
+            </ViewShot>
+
+            <Text>above is a video and below is a continuous screenshot of it</Text>
+
+            <Image fadeDuration={0} source={source} style={{ width: 300, height: 300 }} /> */}
           </View>) :
           <Text>loading...</Text>
       }
       <Link to="/" style={styles.button}>
         <Text style={styles.text}>Share Video</Text>
-      </Link>    
-      <MyLottie style={ styles.bottom }></MyLottie>
+      </Link>
+      <MyLottie style={styles.bottom}></MyLottie>
       <Button onPress={showToast} title="Toast Btn" />
     </>
   );

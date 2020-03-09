@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-native';
-import { Text, StyleSheet, View } from 'react-native';
+import { Text, StyleSheet, View, ScrollView } from 'react-native';
 import { getClip } from '../api/firestore/clips';
 import Video from 'react-native-video';
 
@@ -37,7 +37,7 @@ function Clip() {
   }, [id]);
 
   return (
-    <>
+    <ScrollView>
       <Text>{id}</Text>
       <Text>{clip.title}</Text>
       {
@@ -52,7 +52,7 @@ function Clip() {
         to={`/create/${id}`}
         style={styles.button}
       ><Text style={styles.text}>Create Video</Text></Link>
-    </>
+    </ScrollView>
   );
 }
 
