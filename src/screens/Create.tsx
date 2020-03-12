@@ -10,6 +10,7 @@ import * as RNFS from 'react-native-fs';
 // import Video from 'react-native-video';
 import Canvas, { Image as CanvasImage, ImageData } from 'react-native-canvas';
 import RNImageTools from 'react-native-image-tools-wm';
+import Video from 'react-native-video';
 
 function Create({ navigation, route }: any) {
   const [clip, setClip] = useState<any>({
@@ -126,16 +127,13 @@ function Create({ navigation, route }: any) {
     }
   }
 
-  const updateTest = async (anim: string, width: number, height: number) => {
+  const updateFrames = async (anim: string, width: number, height: number) => {
     const imgPath = "file://" + RNFS.DocumentDirectoryPath + '/frame-0007.jpg';
     const { uri: mainImg } = await RNImageTools.crop(imgPath, 0, 0, width, height);
     const { uri: maskImg } = await RNImageTools.crop(imgPath, 0, height, width, height);
     const { uri: resImg } = await MyLottieModule.alphaMask(mainImg, maskImg, { trimTransparency: false });
-    // const animImg = await myRef.current.capture();
-    // Image.getSize(animImg, (width, height) => { console.log("width, height: ", width, height) }, () => {});
     const { uri: animImg } = await MyLottieModule.getLottieFrame(anim, width, height);
-    const { uri: mergedImg } = await RNImageTools.merge([ animImg, resImg ]);
-    console.log(animImg, mergedImg);
+    const { uri: mergedImg } = await RNImageTools.merge([animImg, resImg]);
     setImg(mergedImg);
   }
 
@@ -150,46 +148,32 @@ function Create({ navigation, route }: any) {
         result = route.params.clip;
         setClip(result);
 
-        // const response = await fetch("https://assets1.lottiefiles.com/packages/lf20_HvFfKv.json");
         const response = await fetch(result.animationUrl);
         data = await response.json();
-        // const placeholderRes = await fetch("https://firebasestorage.googleapis.com/v0/b/swapstr-dev.appspot.com/o/media%2Fimages%2Fplaceholder.png?alt=media&token=57b92092-00d9-419d-bbb9-36ba4145ce59");
-        // const blob = await placeholderRes.blob();
-        // const placeholder = "data:image/png;base64," + blob;        
-        // const paths = { file: "p", folder: "u", preserveAspectRatio: "pr" };
-        // data.assets.forEach((asset: any) => {
-        //   asset[paths.folder] = "";
-        //   asset[paths.file] = placeholder; // Override image
-        //   asset["e"] = 1;
-        // });
-        // console.log(data);
         setAnimationSource(data);
+
         // TODO: check ios support for RNFS.DocumentDirectoryPath
-        // RNFFmpeg.execute(`-ss ${new Date(10/result.fps * 1000).toISOString().substr(11).split("Z")[0]} -i ${result.videoUrl} -vframes 1 -y ${RNFS.CachesDirectoryPath}/output.jpg`).then(result => {
-        //   const path = "file://"+RNFS.CachesDirectoryPath+'/output.jpg'
-        //   setImg(path);
-        //   console.log("FFmpeg process exited with rc " + result.rc)
-        // });
+        const dirPath = RNFS.DocumentDirectoryPath;
+        const outPath = `${dirPath}/frame-%04d.jpg`;
+        const res = await RNFFmpeg.execute(`-i ${result.videoUrl} -y -r ${result.fps} ${outPath}`);
+        // console.log("FFmpeg process exited with rc " + res.rc);
 
-        const res = await RNFFmpeg.execute(`-i ${result.videoUrl} -y -r ${result.fps} ${RNFS.DocumentDirectoryPath}/frame-%04d.jpg`);
-        console.log("FFmpeg process exited with rc " + res.rc)
-        const path = "file://" + RNFS.DocumentDirectoryPath + '/frame-0007.jpg'
-        setImg(path);
+        setTimeout(async () => {
+          await MyLottieModule.processFrames(dirPath, result.animationUrl, result.frames, result.width, result.height);
 
-        // await updateTest(result.width, result.height);
-        setAnimProgress(new Animated.Value(7 / result.fps));
+          // const path = "file://" + RNFS.DocumentDirectoryPath + '/frame-0001.jpg'
+          // setImg(path);
+
+          const res = await RNFFmpeg.execute(`-i ${outPath} -y -r ${result.fps} ${dirPath}/output.mp4`);
+          setImg(`${dirPath}/output.mp4`);
+
+          setLoading(false);
+        }, 1000);
+
+        // await updateFrames(JSON.stringify(data), result.width, result.height);
       }
 
-      setLoading(false);
-
-      setTimeout(async () => {
-        // await updateImage(result.width, result.height);
-        await updateTest(JSON.stringify(data), result.width, result.height);
-        // if (myRef.current) {
-        //   const uri = await myRef.current.capture();
-        //   // setImg(uri);
-        // }
-      }, 3000);
+      // setLoading(false);
     }
 
     fetchData();
@@ -203,25 +187,8 @@ function Create({ navigation, route }: any) {
         !loading ?
           (<View style={styles.container}>
             <Text>loaded</Text>
-            <Image source={{ uri: img }} style={{ width: "100%", height: clip.height }} />
-            {/* <Canvas ref={canvasRef} style={{ width: clip.width, height: clip.height }} />
-            <Canvas ref={tempCanvasRef} style={{ width: clip.width, height: clip.height }} /> */}
-            {/* <ViewShot ref={myRef} options={{ format: "png", quality: 0.9, width: clip.width, height: clip.height }}>
-              <LottieView
-                source={animationSource}
-                imageAssetsFolder={'lottie/placeholder'}
-                ref={setAnimation}
-                progress={animProgress}
-                style={{ width: clip.width, height: clip.height }}
-              />
-            </ViewShot> */}
-            {/* <ViewShot onCapture={onCapture} captureMode="continuous" style={{ width: 300, height: 300 }}>
-              <Video style={{ width: 300, height: 300 }} source={{ uri: clip.videoUrl }} volume={0} repeat />
-            </ViewShot>
-
-            <Text>above is a video and below is a continuous screenshot of it</Text>
-
-            <Image fadeDuration={0} source={source} style={{ width: 300, height: 300 }} /> */}
+            {/* <Image source={{ uri: img }} style={{ width: "100%", height: clip.height }} /> */}
+            <Video source={{ uri: img }} resizeMode="cover" style={{ ...styles.video, width: "100%", height: clip.height }} />
           </View>) :
           <Text>loading...</Text>
       }
@@ -230,7 +197,6 @@ function Create({ navigation, route }: any) {
       </Link>
       <MyLottie style={styles.bottom}></MyLottie>
       <Button onPress={showToast} title="Toast Btn" /> */}
-      <MyLottie style={styles.bottom}></MyLottie>
     </>
   );
 }
@@ -250,7 +216,14 @@ var styles = StyleSheet.create({
   bottom: {
     width: "100%",
     height: 50
-  }
+  },
+  video: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    bottom: 0,
+    right: 0,
+  },
 });
 
 export default Create;
