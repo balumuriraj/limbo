@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-native';
-import { Text, StyleSheet, View, ScrollView } from 'react-native';
-import { getClip } from '../api/firestore/clips';
+import { Text, StyleSheet, View, ScrollView, Button } from 'react-native';
 import Video from 'react-native-video';
+import RNFetchBlob from 'rn-fetch-blob'
+import * as RNFS from 'react-native-fs';
 
-function Clip() {
-  let { id } = useParams();
+function Clip({ navigation, route }: any) {
   const [clip, setClip] = useState<any>({
+    id: null,
     title: null,
     videoUrl: null,
     animationUrl: null,
@@ -18,40 +18,50 @@ function Clip() {
     width: 0,
     height: 0
   });
+  const [videoPath, setVideoPath] = useState<string>();
   const [loading, setLoading] = useState(true);
 
 
   useEffect(() => {
-    setLoading(true);
+    if (route.params?.clip) {
+      setLoading(true);
+      setClip(route.params.clip);
 
-    const fetchData = async () => {
-      if (id) {
-        const result = await getClip(id);
-        setClip(result);
+      const fetchData = async () => {
+        const data = route.params.clip;
+        const path = RNFS.DocumentDirectoryPath + "video.mp4";
+        const res = await RNFetchBlob.config({ path }).fetch('GET', data.videoUrl);
+        console.log(path);
+        setVideoPath(path);
+        setClip({ ...data, videoUrl: path });
+
+        // remove file by specifying a path
+        // RNFetchBlob.fs.unlink('some-file-path').then(() => {
+        //   // ...
+        // })
+
+        setLoading(false);
       }
 
-      setLoading(false);
+      fetchData();
     }
-
-    fetchData();
-  }, [id]);
+  }, [route.params?.clip]);
 
   return (
     <ScrollView>
-      <Text>{id}</Text>
+      <Text>{clip.id}</Text>
       <Text>{clip.title}</Text>
       {
         !loading ?
           (<View style={styles.videoContainer}>
-            <Video source={{ uri: clip.videoUrl }} resizeMode="cover" style={styles.video} />
+            <Video source={{ uri: videoPath }} resizeMode="cover" style={styles.video} />
           </View>) :
           <Text>loading...</Text>
       }
-      <Link
-        key={clip.id}
-        to={`/create/${id}`}
-        style={styles.button}
-      ><Text style={styles.text}>Create Video</Text></Link>
+      <Button
+        title="Create Video"
+        onPress={() => navigation.navigate('Create', { clip })}
+      />
     </ScrollView>
   );
 }

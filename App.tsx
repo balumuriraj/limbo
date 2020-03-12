@@ -8,10 +8,12 @@
  * @format
  */
 
+import 'react-native-gesture-handler';
 import React from 'react';
-import { StyleSheet, View, Text, Platform, InteractionManager } from 'react-native';
+import { StyleSheet } from 'react-native';
 
-import { NativeRouter, Route } from "react-router-native";
+import { NavigationContainer } from '@react-navigation/native';
+import { createStackNavigator } from '@react-navigation/stack';
 import Menu from './src/components/Menu';
 import Home from './src/screens/Home';
 import Clip from './src/screens/Clip';
@@ -20,16 +22,17 @@ import { initFixes } from './src/utils/fixes';
 
 initFixes();
 
+const Stack = createStackNavigator();
+
 const App = () => {
   return (
-    <NativeRouter>
-      <View style={styles.container}>
-        <Menu />
-        <Route exact path="/" component={Home} />
-        <Route exact path="/clip/:id" component={Clip} />
-        <Route exact path="/create/:id" component={Create} />
-      </View>
-    </NativeRouter>
+    <NavigationContainer>
+      <Stack.Navigator>
+        <Stack.Screen name="Home" component={Home} />
+        <Stack.Screen name="Clip" component={Clip} />
+        <Stack.Screen name="Create" component={Create} />
+      </Stack.Navigator>
+    </NavigationContainer>
   );
 };
 

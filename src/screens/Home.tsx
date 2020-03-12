@@ -1,10 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { getClips } from "../api/firestore/clips";
-import { Link } from 'react-router-native';
-import { View, StyleSheet, Text, ScrollView } from 'react-native';
+import { View, StyleSheet, Text, ScrollView, Button } from 'react-native';
 import Clip from './Clip';
 
-function Home() {
+function Home({ navigation }: any) {
   const initClips: any[] = [];
   const [clips, setClips] = useState(initClips);
 
@@ -21,13 +20,11 @@ function Home() {
     <ScrollView style={styles.container}>
       {
         clips.map((clip) => (
-          <Link
+          <Button
             key={clip.id}
-            to={`/clip/${clip.id}`}
-            underlayColor="#f0f4f7"
-          >
-            <Text>{clip.title}</Text>
-          </Link>
+            title={clip.title}
+            onPress={() => navigation.navigate('Clip', { clip })}
+          />
         ))
       }
     </ScrollView>
