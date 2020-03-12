@@ -78,7 +78,9 @@ public class MyLottieModule extends ReactContextBaseJavaModule {
             return null;
         }
 
-        return Bitmap.createBitmap(bmp, x, y, width, height);
+        int updatedWidth = x + width > bmp.getWidth() ? bmp.getWidth() : width;
+
+        return Bitmap.createBitmap(bmp, x, y, updatedWidth, height);
     }
 
     private Bitmap applyMask(Bitmap bmp, Bitmap maskBmp) {

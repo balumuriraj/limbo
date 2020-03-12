@@ -1,16 +1,13 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useParams, Link } from 'react-router-native';
-import { Text, StyleSheet, View, Animated, Button, Image } from 'react-native';
-import { getClip } from '../api/firestore/clips';
-import LottieView from 'lottie-react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { Text, StyleSheet, View } from 'react-native';
 import { RNFFmpeg } from 'react-native-ffmpeg';
-import { MyLottieModule, MyLottie } from '../nativeModules/MyLottieModule';
-import ViewShot from "react-native-view-shot";
+import { MyLottieModule } from '../nativeModules/MyLottieModule';
 import * as RNFS from 'react-native-fs';
-// import Video from 'react-native-video';
-import Canvas, { Image as CanvasImage, ImageData } from 'react-native-canvas';
-import RNImageTools from 'react-native-image-tools-wm';
 import Video from 'react-native-video';
+
+// TODO: check ios support for RNFS.DocumentDirectoryPath        
+const dirPath = RNFS.DocumentDirectoryPath;
+const framesPath = `${dirPath}/frames`;
 
 function Create({ navigation, route }: any) {
   const [clip, setClip] = useState<any>({
@@ -27,153 +24,36 @@ function Create({ navigation, route }: any) {
     height: 0
   });
   const [loading, setLoading] = useState(true);
-  const [animationSource, setAnimationSource] = useState<any>(null);
-  const [animation, setAnimation] = useState<any>(null);
-  const [animProgress, setAnimProgress] = useState<any>(null);
   const myRef: any = useRef();
-  const [img, setImg] = useState<any>(null);
-  // const [source, setSource] = useState<any>(null);
-  // const onCapture = useCallback((uri: any) => setSource({ uri }), []);
-
-  const showToast = async () => {
-    const msg = await MyLottieModule.doPromiseTask(1);
-    MyLottieModule.showToast(msg, MyLottieModule.LONG);
-  }
-
-  const canvasRef = useRef<any>();
-  const tempCanvasRef = useRef<any>();
-
-  const updateImage = async (width: number, height: number) => {
-    const outCanvas = canvasRef.current as Canvas;
-    const tempCanvas = tempCanvasRef.current as Canvas;
-    outCanvas.width = width;
-    outCanvas.height = height;
-    tempCanvas.width = width;
-    tempCanvas.height = height;
-
-    const videoImg = new CanvasImage(tempCanvas);
-    const tmpContext = tempCanvas.getContext('2d');
-    const base64 = await RNFS.readFile("file://" + RNFS.DocumentDirectoryPath + '/frame-0007.jpg', 'base64');
-    videoImg.src = "data:image/jpg;base64," + base64;
-    await new Promise((resolve, reject) => {
-      videoImg.addEventListener('load', async () => {
-        console.log('image is loaded');
-        resolve();
-      });
-    });
-
-    tmpContext.drawImage(videoImg, 0, height, width, height, 0, 0, width, height);
-
-    // Converting matte image into alpha channel
-    const tempImageData = await tmpContext.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
-    const data = Object.values(tempImageData.data);
-    const length = Object.keys(data).length;
-    for (let i = 0; i < length; i += 4) {
-      if (data[i] !== 255) {
-        data[i] = data[i + 1] = data[i + 2] = data[i + 3] = 0;
-      }
-    }
-    const imgData = new ImageData(outCanvas, data, width, height);
-
-    const outCtx = outCanvas.getContext('2d');
-    outCtx.putImageData(imgData, 0, 0);
-    outCtx.globalCompositionOperation = "source-out";
-
-    const videoImg2 = new CanvasImage(outCanvas);
-    videoImg2.src = "data:image/jpg;base64," + base64;
-    await new Promise((resolve, reject) => {
-      videoImg2.addEventListener('load', async () => {
-        console.log('image is loaded');
-        resolve();
-      });
-    });
-    outCtx.drawImage(videoImg2, 0, 0, width, height, 0, 0, width, height);
-    outCtx.globalCompositionOperation = "destination-over";
-
-    const uri = await myRef.current.capture();
-    console.log(uri);
-    const animImg = new CanvasImage(outCanvas);
-    const animBase64 = await RNFS.readFile(uri, 'base64');
-    animImg.src = "data:image/jpg;base64," + animBase64;
-    await new Promise((resolve, reject) => {
-      animImg.addEventListener('load', async () => {
-        console.log('anim image is loaded');
-        resolve();
-      });
-    });
-    outCtx.drawImage(animImg, 0, 0, width, height);
-
-    const url = await outCanvas.toDataURL();
-    setImg(url);
-    await RNFS.writeFile("file://" + RNFS.DocumentDirectoryPath + '/frame-0007.jpg', url.split("data:image/png;base64,")[1], 'base64');
-
-    setTimeout(() => {
-      setImg("file://" + RNFS.DocumentDirectoryPath + '/frame-0007.jpg');
-      console.log("file://" + RNFS.DocumentDirectoryPath + '/frame-0007.jpg');
-    }, 3000);
-  }
-
-  const startAnimation = async (anim: any) => {
-    if (anim) {
-      console.log(anim);
-      setAnimation(anim);
-      // setAnimProgress(new Animated.Value(7));
-      console.log(anim.isMounted());
-
-      if (myRef.current && anim.isMounted()) {
-        const uri = await myRef.current.capture();
-        setImg(uri);
-      }
-    }
-  }
-
-  const updateFrames = async (anim: string, width: number, height: number) => {
-    const imgPath = "file://" + RNFS.DocumentDirectoryPath + '/frame-0007.jpg';
-    const { uri: mainImg } = await RNImageTools.crop(imgPath, 0, 0, width, height);
-    const { uri: maskImg } = await RNImageTools.crop(imgPath, 0, height, width, height);
-    const { uri: resImg } = await MyLottieModule.alphaMask(mainImg, maskImg, { trimTransparency: false });
-    const { uri: animImg } = await MyLottieModule.getLottieFrame(anim, width, height);
-    const { uri: mergedImg } = await RNImageTools.merge([animImg, resImg]);
-    setImg(mergedImg);
-  }
+  const [img, setOutputUrl] = useState<any>(null);
 
   useEffect(() => {
     setLoading(true);
 
     const fetchData = async () => {
-      let result: any = null;
-      let data: any = null;
+      // create frames dir
+      await RNFS.mkdir(framesPath);
 
       if (route.params?.clip) {
-        result = route.params.clip;
+        const result = route.params.clip;
         setClip(result);
 
-        const response = await fetch(result.animationUrl);
-        data = await response.json();
-        setAnimationSource(data);
+        // extract frames to frames dir
+        const framesOutPath = `${framesPath}/frame-%04d.jpg`;
+        await RNFFmpeg.execute(`-i ${result.videoUrl} -y -r ${result.fps} ${framesOutPath}`);
 
-        // TODO: check ios support for RNFS.DocumentDirectoryPath
-        const dirPath = RNFS.DocumentDirectoryPath;
-        const outPath = `${dirPath}/frame-%04d.jpg`;
-        const res = await RNFFmpeg.execute(`-i ${result.videoUrl} -y -r ${result.fps} ${outPath}`);
-        // console.log("FFmpeg process exited with rc " + res.rc);
+        // process frames with animation frames
+        await MyLottieModule.processFrames(framesPath, result.animationUrl, result.frames, result.width, result.height);
 
-        setTimeout(async () => {
-          await MyLottieModule.processFrames(dirPath, result.animationUrl, result.frames, result.width, result.height);
+        // generate video from processed frames
+        await RNFFmpeg.execute(`-i ${framesOutPath} -y -r ${result.fps} ${dirPath}/output.mp4`);
+        setOutputUrl(`${dirPath}/output.mp4`);
 
-          // const path = "file://" + RNFS.DocumentDirectoryPath + '/frame-0001.jpg'
-          // setImg(path);
-
-          const res = await RNFFmpeg.execute(`-i ${outPath} -y -r ${result.fps} ${dirPath}/output.mp4`);
-          setImg(`${dirPath}/output.mp4`);
-
-          setLoading(false);
-        }, 1000);
-
-        // await updateFrames(JSON.stringify(data), result.width, result.height);
+        // delete frames dir
+        await RNFS.unlink(framesPath);
       }
 
-      // setLoading(false);
+      setLoading(false);
     }
 
     fetchData();
@@ -184,19 +64,13 @@ function Create({ navigation, route }: any) {
       <Text>{clip.id}</Text>
       <Text>{clip.title}</Text>
       {
-        !loading ?
+        loading ? <Text>loading...</Text> :
           (<View style={styles.container}>
             <Text>loaded</Text>
-            {/* <Image source={{ uri: img }} style={{ width: "100%", height: clip.height }} /> */}
             <Video source={{ uri: img }} resizeMode="cover" style={{ ...styles.video, width: "100%", height: clip.height }} />
-          </View>) :
-          <Text>loading...</Text>
+          </View>)
+
       }
-      {/* <Link to="/" style={styles.button}>
-        <Text style={styles.text}>Share Video</Text>
-      </Link>
-      <MyLottie style={styles.bottom}></MyLottie>
-      <Button onPress={showToast} title="Toast Btn" /> */}
     </>
   );
 }

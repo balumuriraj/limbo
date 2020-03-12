@@ -29,7 +29,7 @@ function Clip({ navigation, route }: any) {
 
       const fetchData = async () => {
         const data = route.params.clip;
-        const path = RNFS.DocumentDirectoryPath + "video.mp4";
+        const path = RNFS.DocumentDirectoryPath + "/video.mp4";
         const res = await RNFetchBlob.config({ path }).fetch('GET', data.videoUrl);
         console.log(path);
         setVideoPath(path);
