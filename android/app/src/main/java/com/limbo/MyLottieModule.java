@@ -22,6 +22,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
+import android.graphics.Path;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
@@ -128,9 +129,9 @@ public class MyLottieModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void processFrames(String path, String animationUrl, int framesCount, int width, int height, Promise promise) {
+    public void processFrames(String path, String facesPath, String animationUrl, int framesCount, int width, int height, Promise promise) {
         LottieAnimationView view = new LottieAnimationView(reactContext);
-        view.setImageAssetsFolder("lottie/placeholder");
+//        view.setImageAssetsFolder("lottie/placeholder");
 
         LottieResult<LottieComposition> lottieResult = LottieCompositionFactory.fromUrlSync(reactContext, animationUrl);
         LottieComposition lottieComposition = lottieResult.getValue();
@@ -139,6 +140,17 @@ public class MyLottieModule extends ReactContextBaseJavaModule {
         LottieDrawable lottieDrawable = (LottieDrawable) view.getDrawable();
         float scale = (float) width / lottieDrawable.getIntrinsicWidth();
         view.setScale(scale);
+
+        lottieDrawable.setImageAssetDelegate(new ImageAssetDelegate() {
+            @Override
+            public Bitmap fetchBitmap(LottieImageAsset asset) {
+                Bitmap bitmap = Utility.bitmapFromUriString(facesPath + "/" + asset.getFileName(), promise, reactContext);
+                if (bitmap == null) {
+                    return null;
+                }
+                return bitmap;
+            }
+        });
 
         for (int i = 1; i <= framesCount; i++) {
             String filePath = path + "/frame-" + String.format("%04d", i) + ".jpg";
@@ -244,6 +256,141 @@ public class MyLottieModule extends ReactContextBaseJavaModule {
         if (trimTransparency) {
             editBmp = Utility.trimTransparency(editBmp);
         }
+
+        File file = Utility.createRandomPNGFile(reactContext);
+        Utility.writeBMPToPNGFile(editBmp, file, promise);
+
+        final WritableMap map = Utility.buildImageReactMap(file, editBmp);
+        promise.resolve(map);
+    }
+
+    @ReactMethod
+    public void createMaskFromShape(ReadableMap options, Promise promise) {
+        final ReadableArray points = options.getArray("points");
+        final int width = options.getInt("width");
+        final int height = options.getInt("height");
+        final boolean inverted = options.getBoolean("inverted");
+
+        final Paint bgPaint = new Paint();
+        final Paint shapePaint = new Paint();
+
+        if (inverted) {
+            bgPaint.setColor(Color.BLACK);
+            bgPaint.setAlpha(0);
+            shapePaint.setColor(Color.WHITE);
+        } else {
+            bgPaint.setColor(Color.WHITE);
+            shapePaint.setColor(Color.BLACK);
+            shapePaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
+        }
+
+        Bitmap bmp = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bmp);
+
+        final Rect bgRect = new Rect(0, 0, width, height);
+
+        canvas.drawRect(bgRect, bgPaint);
+
+        final Path shapePath = new Path();
+
+        for (int i = 0; i < points.size(); i++) {
+            final ReadableMap pointsItem = points.getMap(i);
+            final int x = pointsItem.getInt("x");
+            final int y = pointsItem.getInt("y");
+            if (i == 0) {
+                shapePath.moveTo(x, y);
+            } else {
+                shapePath.lineTo(x, y);
+            }
+            if (i == points.size() - 1) {
+                shapePath.close();
+            }
+        }
+
+        canvas.drawPath(shapePath, shapePaint);
+
+        File file = Utility.createRandomPNGFile(reactContext);
+        Utility.writeBMPToPNGFile(bmp, file, promise);
+
+        final WritableMap map = Utility.buildImageReactMap(file, bmp);
+        promise.resolve(map);
+    }
+
+    @ReactMethod
+    public void mask(String uriString, String maskUriString, ReadableMap options, Promise promise) {
+
+        final boolean trimTransparency = options.getBoolean("trimTransparency");
+
+        Bitmap bmp = Utility.bitmapFromUriString(uriString, promise, reactContext);
+        if (bmp == null) {
+            return;
+        }
+
+        Bitmap maskBmp = Utility.bitmapFromUriString(maskUriString, promise, reactContext);
+        if (maskBmp == null) {
+            return;
+        }
+
+        final HashMap containedRectMap = Utility.calcRectForContainedRect(
+                maskBmp.getWidth(), maskBmp.getHeight(),
+                bmp.getWidth(), bmp.getHeight()
+        );
+        int editWidth = (int) containedRectMap.get("width");
+        int editHeight = (int) containedRectMap.get("height");
+        int editX = (int) containedRectMap.get("x");
+        int editY = (int) containedRectMap.get("y");
+
+        Bitmap editBmp = Bitmap.createBitmap(editWidth, editHeight, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(editBmp);
+
+        Paint maskPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        maskPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.DST_IN));
+
+        canvas.drawBitmap(bmp, -editX, editY, null);
+
+        Rect maskSrcRect = new Rect(0, 0, maskBmp.getWidth(), maskBmp.getHeight());
+        Rect maskDstRect = new Rect(0, 0, canvas.getWidth(), canvas.getHeight());
+
+        canvas.drawBitmap(maskBmp, maskSrcRect, maskDstRect, maskPaint);
+
+        maskPaint.setXfermode(null);
+
+        canvas.drawBitmap(editBmp, 0, 0, new Paint());
+
+        if (trimTransparency) {
+            editBmp = Utility.trimTransparency(editBmp);
+        }
+
+        File file = Utility.createRandomPNGFile(reactContext);
+        Utility.writeBMPToPNGFile(editBmp, file, promise);
+
+        final WritableMap map = Utility.buildImageReactMap(file, editBmp);
+        promise.resolve(map);
+    }
+
+    @ReactMethod
+    public void resize(String uriString, int width, int height, final Promise promise) {
+        Bitmap bmp = Utility.bitmapFromUriString(uriString, promise, reactContext);
+        if (bmp == null) {
+            return;
+        }
+
+        final HashMap containedRectMap = Utility.calcRectForContainedRect(
+                bmp.getWidth(), bmp.getHeight(),
+                width, height
+        );
+        int rectWidth = (int) containedRectMap.get("width");
+        int rectHeight = (int) containedRectMap.get("height");
+        int rectX = (int) containedRectMap.get("x");
+        int rectY = (int) containedRectMap.get("y");
+
+        Bitmap editBmp = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(editBmp);
+
+        Rect srcRect = new Rect(0, 0, bmp.getWidth(), bmp.getHeight());
+        Rect dstRect = new Rect(rectX, rectY, rectWidth + rectX, rectHeight + rectY);
+
+        canvas.drawBitmap(bmp, srcRect, dstRect, null);
 
         File file = Utility.createRandomPNGFile(reactContext);
         Utility.writeBMPToPNGFile(editBmp, file, promise);

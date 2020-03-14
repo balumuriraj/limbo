@@ -30,15 +30,9 @@ function Clip({ navigation, route }: any) {
       const fetchData = async () => {
         const data = route.params.clip;
         const path = RNFS.DocumentDirectoryPath + "/video.mp4";
-        const res = await RNFetchBlob.config({ path }).fetch('GET', data.videoUrl);
-        console.log(path);
+        await RNFetchBlob.config({ path }).fetch('GET', data.videoUrl);
         setVideoPath(path);
         setClip({ ...data, videoUrl: path });
-
-        // remove file by specifying a path
-        // RNFetchBlob.fs.unlink('some-file-path').then(() => {
-        //   // ...
-        // })
 
         setLoading(false);
       }
@@ -59,9 +53,13 @@ function Clip({ navigation, route }: any) {
           <Text>loading...</Text>
       }
       <Button
+        title="Add Face"
+        onPress={() => navigation.navigate('Face', { clip })}
+      />
+      {/* <Button
         title="Create Video"
         onPress={() => navigation.navigate('Create', { clip })}
-      />
+      /> */}
     </ScrollView>
   );
 }

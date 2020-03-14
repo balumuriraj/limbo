@@ -18,6 +18,7 @@ import Menu from './src/components/Menu';
 import Home from './src/screens/Home';
 import Clip from './src/screens/Clip';
 import Create from './src/screens/Create';
+import Face from './src/screens/Face';
 import { initFixes } from './src/utils/fixes';
 
 initFixes();
@@ -31,6 +32,7 @@ const App = () => {
         <Stack.Screen name="Home" component={Home} />
         <Stack.Screen name="Clip" component={Clip} />
         <Stack.Screen name="Create" component={Create} />
+        <Stack.Screen name="Face" component={Face} />
       </Stack.Navigator>
     </NavigationContainer>
   );

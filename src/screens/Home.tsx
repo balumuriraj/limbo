@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { getClips } from "../api/firestore/clips";
 import { View, StyleSheet, Text, ScrollView, Button } from 'react-native';
-import Clip from './Clip';
 
 function Home({ navigation }: any) {
   const initClips: any[] = [];

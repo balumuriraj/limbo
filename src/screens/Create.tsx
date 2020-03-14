@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Text, StyleSheet, View } from 'react-native';
 import { RNFFmpeg } from 'react-native-ffmpeg';
 import { MyLottieModule } from '../nativeModules/MyLottieModule';
@@ -8,6 +8,7 @@ import Video from 'react-native-video';
 // TODO: check ios support for RNFS.DocumentDirectoryPath        
 const dirPath = RNFS.DocumentDirectoryPath;
 const framesPath = `${dirPath}/frames`;
+const facesPath = `${dirPath}/faces`;
 
 function Create({ navigation, route }: any) {
   const [clip, setClip] = useState<any>({
@@ -21,42 +22,44 @@ function Create({ navigation, route }: any) {
     thumbnailUrl: null,
     thumb: null,
     width: 0,
-    height: 0
+    height: 0,
+    face: null
   });
   const [loading, setLoading] = useState(true);
-  const myRef: any = useRef();
-  const [img, setOutputUrl] = useState<any>(null);
+  const [outputPath, setOutputPath] = useState<any>(null);
 
   useEffect(() => {
-    setLoading(true);
+    if (route.params?.clip) {
+      setLoading(true);
+      setClip(route.params.clip);
 
-    const fetchData = async () => {
-      // create frames dir
-      await RNFS.mkdir(framesPath);
-
-      if (route.params?.clip) {
+      const fetchData = async () => {
         const result = route.params.clip;
-        setClip(result);
+
+        // create frames dir
+        await RNFS.mkdir(framesPath);        
 
         // extract frames to frames dir
         const framesOutPath = `${framesPath}/frame-%04d.jpg`;
         await RNFFmpeg.execute(`-i ${result.videoUrl} -y -r ${result.fps} ${framesOutPath}`);
 
         // process frames with animation frames
-        await MyLottieModule.processFrames(framesPath, result.animationUrl, result.frames, result.width, result.height);
+        await MyLottieModule.processFrames(framesPath, `file://${facesPath}`, result.animationUrl, result.frames, result.width, result.height);
 
         // generate video from processed frames
         await RNFFmpeg.execute(`-i ${framesOutPath} -y -r ${result.fps} ${dirPath}/output.mp4`);
-        setOutputUrl(`${dirPath}/output.mp4`);
+        setOutputPath(`${dirPath}/output.mp4`);
 
         // delete frames dir
-        await RNFS.unlink(framesPath);
+        await RNFS.unlink(framesPath);        
       }
 
-      setLoading(false);
+      try {
+        fetchData();
+      } finally {
+        setLoading(false);
+      }
     }
-
-    fetchData();
   }, [route.params?.clip]);
 
   return (
@@ -67,7 +70,7 @@ function Create({ navigation, route }: any) {
         loading ? <Text>loading...</Text> :
           (<View style={styles.container}>
             <Text>loaded</Text>
-            <Video source={{ uri: img }} resizeMode="cover" style={{ ...styles.video, width: "100%", height: clip.height }} />
+            { outputPath ? <Video source={{ uri: outputPath }} resizeMode="contain" style={{ ...styles.video }} /> : null }
           </View>)
 
       }
@@ -78,6 +81,8 @@ function Create({ navigation, route }: any) {
 var styles = StyleSheet.create({
   container: {
     backgroundColor: "#aaaaaa",
+    flex: 1,
+    margin: 5
   },
   button: {
     backgroundColor: "#f06060",
