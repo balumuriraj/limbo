@@ -11,6 +11,7 @@ function Face({ navigation, route }: any) {
   const [loading, setLoading] = useState(true);
   const [imageUri, setImageUri] = useState<any>(null);
   const [outputPath, setOutputPath] = useState<any>(null);
+  const [size, setSize] = useState({ width: 0, height: 0 });
   const [clip, setClip] = useState<any>(null);
 
   useEffect(() => {
@@ -22,6 +23,7 @@ function Face({ navigation, route }: any) {
         try {
           await RNFS.copyFile(response.path as any, `${RNFS.DocumentDirectoryPath}/face.png`);
           setOutputPath(`file://${RNFS.DocumentDirectoryPath}/face.png`);
+          setSize({ width: response.width, height: response.height });
         } finally {
           setLoading(false);
         }
@@ -54,9 +56,8 @@ function Face({ navigation, route }: any) {
             {
               imageUri ?
                 <Image source={{ uri: imageUri }} style={{ width, height: width }} /> :
-                <Editor ref={editorRef} url={outputPath}></Editor>
+                <Editor ref={editorRef} url={outputPath} size={size}></Editor>
             }
-
           </View>)
       }
       {

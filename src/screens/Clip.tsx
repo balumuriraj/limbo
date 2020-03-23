@@ -34,6 +34,24 @@ function Clip({ navigation, route }: any) {
         setVideoPath(path);
         setClip({ ...data, videoUrl: path });
 
+        // For Dev
+        // const facesPath = `${RNFS.DocumentDirectoryPath}/faces`
+        // await RNFS.mkdir(facesPath);
+
+        // const faceStats = await RNFetchBlob.fs.stat(RNFetchBlob.fs.asset('lottie/placeholder/placeholder.png'));
+        // const face = `file://${RNFS.DocumentDirectoryPath}/faces/placeholder.png`;
+        // await RNFetchBlob.fs.cp(faceStats.path, `${facesPath}/placeholder.png`);
+
+        // const backStats = await RNFetchBlob.fs.stat(RNFetchBlob.fs.asset('lottie/placeholder/back.png'));
+        // const back = `file://${RNFS.DocumentDirectoryPath}/faces/back.png`;
+        // await RNFetchBlob.fs.cp(backStats.path, `${facesPath}/back.png`);
+
+        // const mouthStats = await RNFetchBlob.fs.stat(RNFetchBlob.fs.asset('lottie/placeholder/mouth.png'));
+        // const mouth = `file://${RNFS.DocumentDirectoryPath}/faces/mouth.png`;
+        // await RNFetchBlob.fs.cp(mouthStats.path, `${facesPath}/mouth.png`);
+
+        // setClip({ ...data, videoUrl: path, face });
+
         setLoading(false);
       }
 

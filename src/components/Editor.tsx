@@ -10,6 +10,7 @@ const { width, height } = Dimensions.get('window');
 type EditorState = {};
 type EditorProps = {
   url: string;
+  size: { width: number; height: number; };
 };
 
 class Editor extends React.Component<EditorProps, EditorState> {
@@ -155,16 +156,15 @@ class Editor extends React.Component<EditorProps, EditorState> {
                     onHandlerStateChange={this.onPinchHandlerStateChange}>
 
                     <Animated.View>
-                      <Animated.Image style={[
-                        styles.pinchableImage,
-                        {
-                          transform: [
-                            { perspective: 200 },
-                            { scale: this.scale },
-                            { rotate: this._rotateStr }
-                          ]
-                        }
-                      ]} source={{ uri: this.props.url }} />
+                      <Animated.Image style={{
+                        width: this.props.size.width,
+                        height: this.props.size.height,
+                        transform: [
+                          { perspective: 200 },
+                          { scale: this.scale },
+                          { rotate: this._rotateStr }
+                        ]
+                      }} source={{ uri: this.props.url }} />
 
                     </Animated.View>
                   </PinchGestureHandler>
@@ -193,10 +193,6 @@ const styles = StyleSheet.create({
     height: width,
     overflow: "hidden"
   },
-  pinchableImage: {
-    // backgroundColor: "rgba(255,0,0,0.5)",
-    height: width
-  },
   maskContainer: {
     position: "absolute",
     top: 0,
@@ -208,7 +204,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  maskImage: {    
+  maskImage: {
     width: width,
     height: width,
   }
