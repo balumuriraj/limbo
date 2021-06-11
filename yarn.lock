@@ -3730,9 +3730,9 @@ gl-shader@^4.2.1:
     weakmap-shim "^1.1.0"
 
 glob-parent@^5.0.0:
-  version "5.1.0"
-  resolved "https://registry.yarnpkg.com/glob-parent/-/glob-parent-5.1.0.tgz#5f4c1d1e748d30cd73ad2944b3577a81b081e8c2"
-  integrity sha512-qjtRgnIVmOfnKUE3NJAQEdk+lKrxfw8t5ke7SXtfMTHcjsBfOfWXCQfdb30zfDoZQ2IRSIiidmjtbHZPZ++Ihw==
+  version "5.1.2"
+  resolved "https://registry.yarnpkg.com/glob-parent/-/glob-parent-5.1.2.tgz#869832c58034fe68a4093c17dc15e8340d8401c4"
+  integrity sha512-AOIgSQCepiJYwP3ARnGx+5VnTu2HBYdzbGP45eLw1vr3zB3vZLeyed1sC9hnbcOc9/SrMyM5RPQrkGz4aS9Zow==
   dependencies:
     is-glob "^4.0.1"
 
@@ -6372,11 +6372,6 @@ react-native-image-picker@^2.3.1:
   version "2.3.1"
   resolved "https://registry.yarnpkg.com/react-native-image-picker/-/react-native-image-picker-2.3.1.tgz#1977b65e07793d2c0b2d1976fb675c5f75ad7f11"
   integrity sha512-c/a2h7/T7yBo5KlNQhcSn4xf4+6Li6LfJ59+GZT1ZzzWrj/6X8DiJ/TJBOlOZMC5tJriZKuRkWSsr74k6z+brw==
-
-react-native-image-tools-wm@^1.5.8:
-  version "1.5.8"
-  resolved "https://registry.yarnpkg.com/react-native-image-tools-wm/-/react-native-image-tools-wm-1.5.8.tgz#14ebe11a9933785dec7991b82112d0bf3cc45ad1"
-  integrity sha512-ctYwfORXH/7pBueX61RIQ1Yg9xAysfg3yM8TkmjicoarNUqphmKjghp6vqnOn63h7MBuEfatN/vkckpl7wQcng==
 
 react-native-iphone-x-helper@^1.2.1:
   version "1.2.1"
